@@ -1,0 +1,47 @@
+#!/bin/bash
+#$ -N T7_lib
+#$ -l mfree=30G
+#$ -cwd
+#$ -pe serial 3
+#$ -o out.txt
+#$ -e out.txt
+
+rawdata="raw"
+index="./bwa/GRCh38"
+barcode_attach="bc_attach_T7.py"
+sam_filter="align_filter.py"
+bed_filter="cleanup_sort.py"
+barcode_correct="barcode_correction.py"
+
+
+#Attach barcode to Read 1
+ls $rawdata/T7*R1_001.fastq.gz | cut -d"/" -f2 | cut -d"_" -f1,2 | parallel --gnu "${barcode_attach} {} $rawdata ."
+
+#Trim 3'ITR from reads and keep discard untrimmed reads (with a relatively high error rate, but at least 8bp match)
+echo "Adaptor trimming ..."
+ls *bc.fastq.gz | cut -d"_" -f 1,2 | parallel --gnu "cutadapt --cores=4 --discard-untrimmed -e 0.2 -m 10 -O 8 -a CCCTAGAAAGATAGTCTGCGTAAAATTGACGCATG -o {}_ITR.fastq.gz {}_R1_001.bc.fastq.gz"
+
+#Map trimmed reads to genome
+echo "Alignment ..."
+#module load bwa/0.7.17
+mkdir mapped/
+ls *_ITR.fastq.gz | cut -d"." -f 1 | parallel --gnu "bwa mem -Y $index {}.fastq.gz > mapped/{}.sam.temp"
+
+#Sort sam files
+echo "Sorting Sam files ..."
+ls *_ITR.fastq.gz | cut -d"." -f 1 | parallel --gnu "samtools view -b -F 4 mapped/{}.sam.temp | samtools sort -o mapped/{}.sort.temp.sam"
+
+#Check end of reads. Must contain TTAA and the must align (>4M)
+echo "Filtering Sam files ..."
+ls *_ITR.fastq.gz | cut -d"." -f 1 | parallel --gnu "${sam_filter} mapped/{}.sort.temp.sam"
+
+echo "Running sam2bed ..."
+#module load bedops/2.4.35
+ls *_ITR.fastq.gz | cut -d"." -f 1 | parallel --gnu "sam2bed < mapped/{}.sam > mapped/{}.bed"
+
+echo "Filtering BED files ..."
+ls *_ITR.fastq.gz | cut -d"." -f 1 | parallel --gnu "${bed_filter} mapped/{}.bed UMI"
+rm mapped/*temp*
+
+echo "Barcode correction ..."
+ls *_ITR.fastq.gz | cut -d"." -f 1 | parallel --gnu "${barcode_correct} mapped/{}.out.txt"
