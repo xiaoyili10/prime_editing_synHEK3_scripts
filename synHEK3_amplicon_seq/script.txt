@@ -1,0 +1,18 @@
+#!/bin/bash
+#$ -N synHEK3
+#$ -l mfree=5G
+#$ -cwd
+#$ -pe serial 4
+#$ -o out.txt
+#$ -e out.txt
+
+input_folder="path"
+
+ls *.fastq.gz | cut -d"_" -f1 | parallel --gnu "hek3_P7_barcode_attach.py {} ${input_folder} ."
+
+ls *_bc.fastq.gz | cut -d"_" -f1 | parallel --gnu "fastq2allele.py {}_bc.fastq.gz {}.csv"
+
+ls *_bc.fastq.gz | cut -d"_" -f1 | parallel --gnu "edits_precise.py {}.csv {}_edit.txt"
+
+ls *_bc.fastq.gz | cut -d"_" -f1 | parallel --gnu "piggybac_PE_edit_all.py {}_edit.txt {}_barcode_edit.txt"
+
