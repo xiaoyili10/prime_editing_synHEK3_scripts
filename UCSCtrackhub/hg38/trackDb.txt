@@ -1,5 +1,5 @@
 track synHEK3_PE_CTT
-bigDataUrl P500_1_ctt.bigBed
+bigDataUrl https://raw.githubusercontent.com/xiaoyili10/prime_editing_synHEK3_scripts/main/UCSCtrackhub/hg38/P500_1_ctt.bigBed
 shortLabel PE_CTT
 longLabel synHEK3_PE_CTT
 type bigBed
