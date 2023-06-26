@@ -1,0 +1,5 @@
+track synHEK3_PE_CTT
+bigDataUrl P500_1_ctt.bigBed
+shortLabel PE_CTT
+longLabel synHEK3_PE_CTT
+type bigBed

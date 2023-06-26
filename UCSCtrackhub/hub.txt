@@ -1,0 +1,6 @@
+hub synHEK3
+shortLabel PE synHEK3
+longLabel UCSC hub for prime editing data in synHEK3 reporters
+genomesFile genomes.txt
+email xyli10@uw.edu
+descriptionUrl https://github.com/xiaoyili10/prime_editing_synHEK3_scripts 
